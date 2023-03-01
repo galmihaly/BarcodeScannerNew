@@ -38,8 +38,6 @@ public class SetupCamera {
     private ImageAnalysis.Builder imageAnalysisBuilder;
     private int imageAnalysisType;
 
-    private CodeAnalyzer codeAnalyzer;
-
     public SetupCamera(Context context, LifecycleOwner lifecycleOwner, int lensFacing, ProcessCameraProvider cameraProvider, Preview.Builder previewBuilder, int rotation, Preview.SurfaceProvider surfaceProvider, Executor executor, ImageAnalysis.Builder imageAnalysisBuilder, int imageAnalysisType) {
         this.context = context;
         this.lifecycleOwner = lifecycleOwner;
@@ -53,6 +51,7 @@ public class SetupCamera {
         this.imageAnalysisType = imageAnalysisType;
     }
 
+    private CodeAnalyzer codeAnalyzer;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private CameraSelector cameraSelector;
     private Preview previewUseCase;
