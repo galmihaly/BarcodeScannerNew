@@ -39,7 +39,7 @@ public class SetupCamera {
     private int imageAnalysisType;
 
     public SetupCamera(Context context, LifecycleOwner lifecycleOwner, int lensFacing, ProcessCameraProvider cameraProvider, Preview.Builder previewBuilder, int rotation, Preview.SurfaceProvider surfaceProvider, Executor executor, ImageAnalysis.Builder imageAnalysisBuilder, int imageAnalysisType) {
-        this.context = context;
+        this.context = context.getApplicationContext();
         this.lifecycleOwner = lifecycleOwner;
         this.lensFacing = lensFacing;
         this.cameraProvider = cameraProvider;
@@ -75,10 +75,12 @@ public class SetupCamera {
         if (previewUseCase != null) { cameraProvider.unbind(previewUseCase); }
         if (analysisUseCase != null) { cameraProvider.unbind(analysisUseCase); }
 
+        // PreviewUseCase
         previewBuilder.setTargetRotation(rotation);
         previewUseCase = previewBuilder.build();
         previewUseCase.setSurfaceProvider(surfaceProvider);
 
+        // ImageAnalysisUseCase
         imageAnalysisBuilder.setBackpressureStrategy(imageAnalysisType);
         imageAnalysisBuilder.setTargetRotation(rotation);
         analysisUseCase = imageAnalysisBuilder.build();
