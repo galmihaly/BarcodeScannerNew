@@ -1,6 +1,7 @@
 package hu.unideb.inf.barcodescannernew;
 
 import android.content.Context;
+import android.os.Message;
 import android.util.Log;
 import android.view.Surface;
 
@@ -15,11 +16,16 @@ import androidx.lifecycle.LifecycleOwner;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import hu.unideb.inf.barcodescannernew.tasksmanager.PresenterThreadCallback;
+
 public class SetupCamera {
+
+    private WeakReference<PresenterThreadCallback> presenterThreadCallbackWeakReference;
 
     private Context context;
     private LifecycleOwner lifecycleOwner;
@@ -32,6 +38,20 @@ public class SetupCamera {
     private ImageAnalysis.Builder imageAnalysisBuilder;
     private int imageAnalysisType;
 
+    private CodeAnalyzer codeAnalyzer;
+
+    public SetupCamera(Context context, LifecycleOwner lifecycleOwner, int lensFacing, ProcessCameraProvider cameraProvider, Preview.Builder previewBuilder, int rotation, Preview.SurfaceProvider surfaceProvider, Executor executor, ImageAnalysis.Builder imageAnalysisBuilder, int imageAnalysisType) {
+        this.context = context;
+        this.lifecycleOwner = lifecycleOwner;
+        this.lensFacing = lensFacing;
+        this.cameraProvider = cameraProvider;
+        this.previewBuilder = previewBuilder;
+        this.rotation = rotation;
+        this.surfaceProvider = surfaceProvider;
+        this.executor = executor;
+        this.imageAnalysisBuilder = imageAnalysisBuilder;
+        this.imageAnalysisType = imageAnalysisType;
+    }
 
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private CameraSelector cameraSelector;
@@ -63,7 +83,8 @@ public class SetupCamera {
         imageAnalysisBuilder.setBackpressureStrategy(imageAnalysisType);
         imageAnalysisBuilder.setTargetRotation(rotation);
         analysisUseCase = imageAnalysisBuilder.build();
-        CodeAnalyzer codeAnalyzer = new CodeAnalyzer();
+
+        codeAnalyzer = new CodeAnalyzer(context);
         analysisUseCase.setAnalyzer(executor, codeAnalyzer.getAnalizer());
 
         try {
@@ -76,5 +97,15 @@ public class SetupCamera {
 
     public ListenableFuture<ProcessCameraProvider> getCameraProvider(){
         return this.cameraProviderFuture;
+    }
+
+    public void setPresenterCallback(PresenterThreadCallback presenterThreadCallback) {
+        this.presenterThreadCallbackWeakReference = new WeakReference<>(presenterThreadCallback);
+    }
+
+    public void sendResultToPresenter(Message message){
+        if(presenterThreadCallbackWeakReference!= null && presenterThreadCallbackWeakReference.get() != null) {
+            presenterThreadCallbackWeakReference.get().sendResultToPresenter(message);
+        }
     }
 }

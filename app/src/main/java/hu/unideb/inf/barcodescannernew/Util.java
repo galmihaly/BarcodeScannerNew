@@ -6,6 +6,8 @@ import android.os.Message;
 public class Util {
 
     public static final String MESSAGE_BODY = "MESSAGE_BODY";
+    public static final int IS_CREATED = 1;
+    public static final int IS_NOT_CREATED = 2;
 
     public static Message createMessage(int id, String dataString) {
         Bundle bundle = new Bundle();

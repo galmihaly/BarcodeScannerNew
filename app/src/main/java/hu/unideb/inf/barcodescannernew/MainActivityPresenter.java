@@ -61,9 +61,6 @@ public class MainActivityPresenter implements IMainActivityPresenter, PresenterT
     }
 
 
-
-
-
     private static class MainActivityHandler extends Handler {
 
         private WeakReference<IMainActivityPresenter> iMainActivityPresenterWeakReference;
