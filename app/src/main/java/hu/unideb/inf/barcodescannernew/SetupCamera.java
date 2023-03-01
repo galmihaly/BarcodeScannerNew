@@ -50,11 +50,11 @@ public class SetupCamera {
 
     public void bindUsesCases(){
         if (cameraProvider == null) { return; }
+        if(previewBuilder == null) { return; }
+        if(imageAnalysisBuilder == null) { return; }
+
         if (previewUseCase != null) { cameraProvider.unbind(previewUseCase); }
         if (analysisUseCase != null) { cameraProvider.unbind(analysisUseCase); }
-        if(previewBuilder == null) {return; }
-        if(imageAnalysisBuilder == null) {return;}
-
 
         previewBuilder.setTargetRotation(rotation);
         previewUseCase = previewBuilder.build();
@@ -63,7 +63,8 @@ public class SetupCamera {
         imageAnalysisBuilder.setBackpressureStrategy(imageAnalysisType);
         imageAnalysisBuilder.setTargetRotation(rotation);
         analysisUseCase = imageAnalysisBuilder.build();
-        analysisUseCase.setAnalyzer(executor, this::analyze);
+        CodeAnalyzer codeAnalyzer = new CodeAnalyzer();
+        analysisUseCase.setAnalyzer(executor, codeAnalyzer.getAnalizer());
 
         try {
             cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, analysisUseCase);
@@ -75,9 +76,5 @@ public class SetupCamera {
 
     public ListenableFuture<ProcessCameraProvider> getCameraProvider(){
         return this.cameraProviderFuture;
-    }
-
-    private void analyze(@NonNull ImageProxy image) {
-
     }
 }
