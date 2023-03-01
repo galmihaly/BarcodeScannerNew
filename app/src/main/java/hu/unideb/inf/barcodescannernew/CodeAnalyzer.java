@@ -23,6 +23,7 @@ public class CodeAnalyzer {
     private InputImage inputImage;
     private BarcodeScannerOptions options;
     private BarcodeScanner barcodeScanner;
+    private TrackedCodeView trackedCodeView;
 
     public ImageAnalysis.Analyzer getAnalizer(){
         return this::analyze;
@@ -43,8 +44,8 @@ public class CodeAnalyzer {
         barcodeScanner.process(inputImage)
                 .addOnSuccessListener((List<Barcode> barcodes)->{
                     if (barcodes.size() > 0) {
-                        TrackedCodeView trackedCodeView = new TrackedCodeView(context, barcodes.get(0).getBoundingBox());
-                        drawCL.addView(trackedCodeView);
+                        trackedCodeView = new TrackedCodeView(context, barcodes.get(0).getBoundingBox());
+                        //drawCL.addView(trackedCodeView);
 
 
                         //innen fogjuk visszairányítani a kapott eredményt
@@ -57,11 +58,7 @@ public class CodeAnalyzer {
 //                        drawCL.removeAllViews();
                     }
                 })
-                .addOnFailureListener(e ->
-                        Log.e("TAG", "A kód feldolgozása sikertelen!", e)
-                )
-                .addOnCompleteListener(task ->
-                        image.close()
-                );
+                .addOnFailureListener(e -> Log.e("TAG", "A kód feldolgozása sikertelen!", e))
+                .addOnCompleteListener(task -> image.close());
     }
 }
