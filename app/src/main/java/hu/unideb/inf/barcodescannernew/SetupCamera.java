@@ -1,5 +1,7 @@
 package hu.unideb.inf.barcodescannernew;
 
+import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+
 import android.content.Context;
 import android.os.Message;
 import android.util.Log;
@@ -38,16 +40,11 @@ public class SetupCamera {
     private ImageAnalysis.Builder imageAnalysisBuilder;
     private int imageAnalysisType;
 
-    public SetupCamera(Context context, LifecycleOwner lifecycleOwner, int lensFacing, ProcessCameraProvider cameraProvider, Preview.Builder previewBuilder, int rotation, Preview.SurfaceProvider surfaceProvider, Executor executor, ImageAnalysis.Builder imageAnalysisBuilder, int imageAnalysisType) {
-        this.context = context.getApplicationContext();
-        this.lifecycleOwner = lifecycleOwner;
+    public SetupCamera(Context context, int lensFacing, Preview.SurfaceProvider surfaceProvider, Executor executor, int imageAnalysisType) {
+        this.context = context;
         this.lensFacing = lensFacing;
-        this.cameraProvider = cameraProvider;
-        this.previewBuilder = previewBuilder;
-        this.rotation = rotation;
         this.surfaceProvider = surfaceProvider;
         this.executor = executor;
-        this.imageAnalysisBuilder = imageAnalysisBuilder;
         this.imageAnalysisType = imageAnalysisType;
     }
 
@@ -59,45 +56,60 @@ public class SetupCamera {
 
 
     public void initCamera(){
-        this.cameraProviderFuture = ProcessCameraProvider.getInstance(context);
-        this.cameraSelector = new CameraSelector.Builder().requireLensFacing(lensFacing).build();
+        cameraProviderFuture = ProcessCameraProvider.getInstance(context);
+        cameraSelector = new CameraSelector.Builder().requireLensFacing(lensFacing).build();
     }
 
-    public void initFutureMethodForCameraProvider(Runnable runnable){
-        this.cameraProviderFuture.addListener(runnable, ContextCompat.getMainExecutor(context));
+    public void setLifecycleOwner(LifecycleOwner lifecycleOwner) {
+        this.lifecycleOwner = lifecycleOwner;
+    }
+
+    public void setRotation(int rotation) {
+        this.rotation = rotation;
+    }
+
+    public void initFutureMethodForCameraProvider(){
+        cameraProviderFuture.addListener(() -> {
+            try {
+                this.cameraProvider = cameraProviderFuture.get();
+            } catch (ExecutionException | InterruptedException e) {
+                Log.e("Hiba", e.getMessage());
+            }
+        }, ContextCompat.getMainExecutor(context));
     }
 
     public void bindUsesCases(){
-        if (cameraProvider == null) { return; }
-        if(previewBuilder == null) { return; }
-        if(imageAnalysisBuilder == null) { return; }
-
-        if (previewUseCase != null) { cameraProvider.unbind(previewUseCase); }
-        if (analysisUseCase != null) { cameraProvider.unbind(analysisUseCase); }
-
-        // PreviewUseCase
-        previewBuilder.setTargetRotation(rotation);
-        previewUseCase = previewBuilder.build();
-        previewUseCase.setSurfaceProvider(surfaceProvider);
-
-        // ImageAnalysisUseCase
-        imageAnalysisBuilder.setBackpressureStrategy(imageAnalysisType);
-        imageAnalysisBuilder.setTargetRotation(rotation);
-        analysisUseCase = imageAnalysisBuilder.build();
-
-        codeAnalyzer = new CodeAnalyzer(context);
-        analysisUseCase.setAnalyzer(executor, codeAnalyzer.getAnalizer());
-
         try {
-            cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, analysisUseCase);
-            cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, previewUseCase);
-        } catch (Exception e) {
-            Log.e("TAG", "Hiba az analizer csatlakoztatásakor!", e);
-        }
-    }
+            this.cameraProvider = cameraProviderFuture.get();
 
-    public ListenableFuture<ProcessCameraProvider> getCameraProvider(){
-        return this.cameraProviderFuture;
+            if (this.cameraProvider == null) { return; }
+            if(this.previewBuilder == null) { return; }
+            if(this.imageAnalysisBuilder == null) { return; }
+
+            if (previewUseCase != null) { this.cameraProvider.unbind(previewUseCase); }
+            if (analysisUseCase != null) { this.cameraProvider.unbind(analysisUseCase); }
+
+            // PreviewUseCase
+            this.previewBuilder = new Preview.Builder();
+            this.previewBuilder.setTargetRotation(this.rotation);
+            previewUseCase = this.previewBuilder.build();
+            previewUseCase.setSurfaceProvider(this.surfaceProvider);
+
+            // ImageAnalysisUseCase
+            this.imageAnalysisBuilder = new ImageAnalysis.Builder();
+            this.imageAnalysisBuilder.setBackpressureStrategy(imageAnalysisType);
+            this.imageAnalysisBuilder.setTargetRotation(rotation);
+            analysisUseCase = this.imageAnalysisBuilder.build();
+
+            codeAnalyzer = new CodeAnalyzer(this.context);
+            analysisUseCase.setAnalyzer(this.executor, codeAnalyzer.getAnalizer());
+
+            this.cameraProvider.bindToLifecycle(this.lifecycleOwner, cameraSelector, analysisUseCase);
+            this.cameraProvider.bindToLifecycle(this.lifecycleOwner, cameraSelector, previewUseCase);
+
+        } catch (ExecutionException | InterruptedException e) {
+            Log.e("Hiba", e.getMessage());
+        }
     }
 
     public void setPresenterCallback(PresenterThreadCallback presenterThreadCallback) {
