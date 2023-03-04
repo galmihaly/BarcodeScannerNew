@@ -18,7 +18,7 @@ import com.google.mlkit.vision.common.InputImage;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class CodeAnalyzer {
+public class CodeAnalyzer implements ImageAnalysis.Analyzer {
 
     private WeakReference<SetupCamera> ctpmw;
 
@@ -26,7 +26,7 @@ public class CodeAnalyzer {
     private InputImage inputImage;
     private BarcodeScannerOptions options;
     private BarcodeScanner barcodeScanner;
-    private TrackedCodeView trackedCodeView;
+//    private TrackedCodeView trackedCodeView;
     private Message message;
 
     public ImageAnalysis.Analyzer getAnalizer(){
@@ -42,7 +42,7 @@ public class CodeAnalyzer {
     }
 
     @SuppressLint({"UnsafeOptInUsageError", "UseCompatLoadingForDrawables"})
-    private void analyze(@NonNull ImageProxy image) {
+    public void analyze(@NonNull ImageProxy image) {
         if (image.getImage() == null) return;
 
         inputImage = InputImage.fromMediaImage(
@@ -56,11 +56,11 @@ public class CodeAnalyzer {
         barcodeScanner.process(inputImage)
                 .addOnSuccessListener((List<Barcode> barcodes)->{
                     if (barcodes.size() > 0) {
-                        trackedCodeView = new TrackedCodeView(context, barcodes.get(0).getBoundingBox());
+//                        trackedCodeView = new TrackedCodeView(context, barcodes.get(0).getBoundingBox());
                         //drawCL.addView(trackedCodeView);
 
                         message = Util.createMessage(Util.IS_CREATED, "A trackedCodeView elkészült!");
-                        message.obj = trackedCodeView;
+                        message.obj = barcodes.get(0).getBoundingBox();
 
                         if(ctpmw != null && ctpmw.get() != null && message != null) {
                             ctpmw.get().sendResultToPresenter(message);
